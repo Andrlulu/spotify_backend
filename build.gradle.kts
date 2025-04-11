@@ -30,9 +30,13 @@ repositories {
 }
 
 dependencies {
+    // ktor library
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
+    // ktor http engine
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
+    // ktor middle layer on negotiate the content we pass between server
     implementation("io.ktor:ktor-server-content-negotiation:$ktor_version")
+    // ktor tool on using json
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlin_serialization")
     implementation("ch.qos.logback:logback-classic:$logback_version")
