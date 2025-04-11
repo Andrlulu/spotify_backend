@@ -3,11 +3,30 @@ package com.laioffer
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+
+// data class to store data: Playlist and Song
+// Serializable to let it generate deserializer, convert kotlin class into json file
+@Serializable
+data class Playlist (
+    val id: Long,
+    val songs: List<Song>
+)
+
+@Serializable
+data class Song (
+    val name: String,
+    val lyric: String,
+    val src: String,
+    val length: String
+)
 
 // first class citizen, can declare directly in the file
 fun main() {
@@ -60,7 +79,48 @@ fun Application.module() {
             call.respondText { jsonString ?: "null" }
         }
 
+        // 1. Get the playlist id from the query parameter
+        // 2. Deserialize playlists.json to list of playlist
+        // 3. filter the playlist with id
+        // 4. return the playlist in response
+        // jsonString -> List<Playlist>
+        // jsonString -> kotlin/java object: decode/deserialize
+        // kotlin/java object -> jsonString: Serialize
+        //val jsonString: String? = this::class.java.classLoader.getResource("playlists.json")?.readText()
+        /* Java old way of writing it
+        val jsonString = this::class.java.classLoader.getResource("playlists.json").readText()
+        if (jsonString != "null") {
+            val playlists: List<Song> = Json.decodeFromString(ListSerializer(Playlist.serializer()), jsonString)
+            val id: String? = call.parameters["id"]
+            val playlist: Playlist? = playlists.firstOrNull { item -> item.id.toString() == id }
+        } else {
+            call.respondText("null")
+        }
+        */
+        get("playlist/{id}") { // 1. Get the playlist id from the query parameter
+            this::class.java.classLoader.getResource("playlists.json")?.readText()?.let {
+                // 2. Deserialize playlists.json to list of playlist
+                val playlists = Json.decodeFromString(ListSerializer(Playlist.serializer()), it)
+                // 3. filter the playlist with id
+                val id = call.parameters["id"]
+                val playlist: Playlist? = playlists.firstOrNull { item: Playlist -> item.id.toString() == id }
+                // 4. return the playlist in response
+                call.respondNullable(playlist)
+            } ?: call.respondText("null")
+        }
 
+        // serve files, static plugin help simplifies.
+        //Serve content from a resource folder by using following
+        static("/") {
+            staticBasePackage = "static"
+            static("songs") {
+                //allow files in the songs resource folder to be served as static content
+                // under the given URL pattern,
+                // eg: request to /songs/[song_name].mp3 ->serve: static/songs/[song_name].mp3
+                // actual url: http://0.0.0.0:8080/songs/solo.mp3
+                resources("songs")
+            }
+        }
     }
     // routing decompose:
     myRouting {
