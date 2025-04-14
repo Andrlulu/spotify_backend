@@ -8,6 +8,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -52,6 +53,8 @@ fun Application.module() {
         get("feed") {
             // create val jsonString type String nullable,
             // load the resource feed.json from the resource folder, nullable, if not null readTet()
+            val randomNumber = (1000..2000).random()
+            delay(randomNumber.toLong())
             val jsonString: String? = this::class.java.classLoader.getResource("feed.json")?.readText()
             /* in java:
             if (jsonString != null) {
